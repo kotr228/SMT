@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "DocControlService\\DocControlService.csproj",
+        "Action": "Start",
+        "DebugTarget": "DocControlService"
+      },
+      {
+        "Path": "DocControlUI\\DocControlUI.csproj",
+        "Action": "Start",
+        "DebugTarget": "DocControlUI"
+      }
+    ]
+  }
+]

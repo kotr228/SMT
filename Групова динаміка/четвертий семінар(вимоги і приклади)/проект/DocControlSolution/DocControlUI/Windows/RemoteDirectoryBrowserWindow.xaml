@@ -1,0 +1,431 @@
+<Controls:MetroWindow x:Class="DocControlUI.Windows.RemoteDirectoryBrowserWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:Controls="http://metro.mahapps.com/winfx/xaml/controls"
+        Title="🌐 Віддалені директорії"
+        Height="800" Width="1400"
+        WindowStartupLocation="CenterScreen"
+        Icon="/Assets/424.ico"
+        Background="{StaticResource BackgroundBrush}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Заголовок -->
+        <Border Grid.Row="0" Padding="15" Background="#2196F3">
+            <StackPanel>
+                <TextBlock x:Name="TitleText" Text="🌐 Менеджер віддалених директорій"
+                           FontSize="20" FontWeight="Bold" Foreground="White"/>
+                <TextBlock x:Name="DeviceNameText" Text="Пристрій: -"
+                           FontSize="12" Foreground="White" Opacity="0.9" Margin="0,5,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Основний контент -->
+        <Grid Grid.Row="1" Margin="15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.2*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="3*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Список директорій -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Background="#F5F5F5" BorderBrush="#E0E0E0"
+                        BorderThickness="1" Padding="10" Margin="0,0,0,10">
+                    <Grid>
+                        <TextBlock Text="📁 Shared директорії"
+                                   FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="DirectoryCountText" Text="0 директорій"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center"
+                                   Foreground="#666" FontWeight="SemiBold"/>
+                    </Grid>
+                </Border>
+
+                <DataGrid Grid.Row="1"
+                          x:Name="DirectoriesGrid"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          SelectionMode="Single"
+                          SelectionChanged="DirectoriesGrid_SelectionChanged"
+                          CanUserAddRows="False"
+                          GridLinesVisibility="Horizontal"
+                          HeadersVisibility="Column"
+                          RowHeight="35">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="📁 Назва" Binding="{Binding Name}" Width="*">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="Padding" Value="5"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="🔓 Статус" Binding="{Binding SharedStatusText}" Width="80">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                    <Setter Property="Padding" Value="5"/>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+
+            <GridSplitter Grid.Column="1"
+                          Width="10"
+                          HorizontalAlignment="Stretch"
+                          Background="Transparent"/>
+
+            <!-- Вкладки з функціоналом -->
+            <TabControl Grid.Column="2">
+                <!-- Вкладка 1: Статистика -->
+                <TabItem Header="📊 Статистика">
+                    <Border Padding="15">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <TextBlock Text="📋 Деталі директорії"
+                                           FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                                <TextBlock Text="Назва:" FontWeight="Bold" Margin="0,5,0,0"/>
+                                <TextBlock x:Name="DetailNameText" Text="-" Margin="0,2,0,0" TextWrapping="Wrap"/>
+
+                                <TextBlock Text="Шлях на віддаленому пристрої:" FontWeight="Bold" Margin="0,10,0,0"/>
+                                <TextBlock x:Name="DetailPathText" Text="-" Margin="0,2,0,0"
+                                           TextWrapping="Wrap" FontFamily="Consolas" FontSize="11"/>
+
+                                <Separator Margin="0,15"/>
+
+                                <TextBlock Text="📊 Візуальна статистика"
+                                           FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                                <!-- Прогрес бари -->
+                                <Border BorderBrush="#E0E0E0" BorderThickness="1"
+                                        Background="#FAFAFA" CornerRadius="5" Padding="15" Margin="0,0,0,15">
+                                    <StackPanel>
+                                        <!-- Об'єкти -->
+                                        <StackPanel Margin="0,5">
+                                            <Grid>
+                                                <TextBlock Text="📦 Об'єкти" FontSize="12" FontWeight="Bold"/>
+                                                <TextBlock x:Name="StatsObjectsText" Text="0"
+                                                           HorizontalAlignment="Right" FontSize="12" FontWeight="Bold"/>
+                                            </Grid>
+                                            <ProgressBar x:Name="ObjectsProgressBar"
+                                                         Height="8" Margin="0,3,0,0"
+                                                         Foreground="#2196F3"
+                                                         Maximum="100" Value="0"/>
+                                        </StackPanel>
+
+                                        <!-- Папки -->
+                                        <StackPanel Margin="0,10,0,0">
+                                            <Grid>
+                                                <TextBlock Text="📁 Папки" FontSize="12" FontWeight="Bold"/>
+                                                <TextBlock x:Name="StatsFoldersText" Text="0"
+                                                           HorizontalAlignment="Right" FontSize="12" FontWeight="Bold"/>
+                                            </Grid>
+                                            <ProgressBar x:Name="FoldersProgressBar"
+                                                         Height="8" Margin="0,3,0,0"
+                                                         Foreground="#4CAF50"
+                                                         Maximum="100" Value="0"/>
+                                        </StackPanel>
+
+                                        <!-- Файли -->
+                                        <StackPanel Margin="0,10,0,0">
+                                            <Grid>
+                                                <TextBlock Text="📄 Файли" FontSize="12" FontWeight="Bold"/>
+                                                <TextBlock x:Name="StatsFilesText" Text="0"
+                                                           HorizontalAlignment="Right" FontSize="12" FontWeight="Bold"/>
+                                            </Grid>
+                                            <ProgressBar x:Name="FilesProgressBar"
+                                                         Height="8" Margin="0,3,0,0"
+                                                         Foreground="#FF9800"
+                                                         Maximum="100" Value="0"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Статус доступу -->
+                                <Border x:Name="StatusBorder"
+                                        BorderBrush="#E0E0E0" BorderThickness="1"
+                                        Background="#FAFAFA" CornerRadius="5" Padding="15" Margin="0,0,0,15">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <Ellipse x:Name="StatusIndicator"
+                                                 Width="16" Height="16"
+                                                 Fill="#9E9E9E"
+                                                 Grid.Column="0"
+                                                 Margin="0,0,10,0"/>
+
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="Статус спільного доступу"
+                                                       FontSize="11" FontWeight="Bold"/>
+                                            <TextBlock x:Name="StatsSharedText"
+                                                       Text="Невідомо"
+                                                       FontSize="11"
+                                                       Margin="0,3,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Кнопки дій -->
+                                <StackPanel>
+                                    <Button Content="🔄 Оновити статистику"
+                                            Click="RefreshStats_Click"
+                                            Padding="10,8" Margin="0,5"/>
+
+                                    <Button Content="🔍 Сканувати директорію"
+                                            Click="ScanRemoteDirectory_Click"
+                                            Background="#FF9800" Foreground="White"
+                                            Padding="10,8" Margin="0,5"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </TabItem>
+
+                <!-- Вкладка 2: Файловий провідник -->
+                <TabItem Header="📂 Файли та папки">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Панель інструментів -->
+                        <Border Grid.Row="0" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1" Padding="10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Шлях та навігація -->
+                                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                    <Button Content="🏠" x:Name="NavigateToHomeButton" Click="NavigateToHome_Click" Padding="10,5" Margin="0,0,5,0" ToolTip="Перейти до кореневої директорії"/>
+                                    <Button Content="⬆️" x:Name="NavigateUpButton" Click="NavigateUp_Click" Padding="10,5" Margin="0,0,10,0" ToolTip="Перейти вгору" IsEnabled="False"/>
+                                    <TextBox x:Name="CurrentPathTextBox"
+                                             VerticalContentAlignment="Center"
+                                             MinWidth="300"
+                                             Padding="8"
+                                             IsReadOnly="True"/>
+                                </StackPanel>
+
+                                <!-- Кнопки дій -->
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button Content="➕ Папка" Click="CreateFolder_Click"
+                                            Background="#4CAF50" Foreground="White"
+                                            Padding="10,5" Margin="5,0"/>
+                                    <Button Content="📄 Файл" Click="CreateFile_Click"
+                                            Background="#2196F3" Foreground="White"
+                                            Padding="10,5" Margin="5,0"/>
+                                    <Button Content="✏️" x:Name="RenameButton" Click="Rename_Click"
+                                            Padding="10,5" Margin="5,0" IsEnabled="False" ToolTip="Перейменувати"/>
+                                    <Button Content="🗑️" x:Name="DeleteButton" Click="Delete_Click"
+                                            Background="#F44336" Foreground="White"
+                                            Padding="10,5" Margin="5,0" IsEnabled="False" ToolTip="Видалити"/>
+                                    <Button Content="🔄" x:Name="RefreshExplorerButton" Click="RefreshExplorer_Click"
+                                            Padding="10,5" Margin="5,0" ToolTip="Оновити"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Головна область -->
+                        <Grid Grid.Row="1" Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="1*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Список файлів і папок -->
+                            <Border Grid.Column="0" BorderBrush="#E0E0E0" BorderThickness="1">
+                                <DataGrid x:Name="FileSystemGrid"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          SelectionMode="Single"
+                                          SelectionChanged="FileSystemGrid_SelectionChanged"
+                                          MouseDoubleClick="FileSystemGrid_MouseDoubleClick"
+                                          CanUserAddRows="False">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="📦" Binding="{Binding Icon}" Width="50"/>
+                                        <DataGridTextColumn Header="Назва" Binding="{Binding Name}" Width="*"/>
+                                        <DataGridTextColumn Header="Розмір" Binding="{Binding SizeString}" Width="100"/>
+                                        <DataGridTextColumn Header="Змінено" Binding="{Binding ModifiedString}" Width="150"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Border>
+
+                            <GridSplitter Grid.Column="1"
+                                          Width="10"
+                                          HorizontalAlignment="Stretch"
+                                          Background="Transparent"/>
+
+                            <!-- Панель деталей файлу/папки -->
+                            <Border Grid.Column="2" BorderBrush="#E0E0E0" BorderThickness="1" Padding="15">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <StackPanel>
+                                        <TextBlock Text="📋 Деталі"
+                                                   FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                                        <TextBlock Text="Назва:" FontWeight="Bold" Margin="0,5,0,0"/>
+                                        <TextBlock x:Name="FileDetailNameText" Text="-" Margin="0,2,0,0" TextWrapping="Wrap"/>
+
+                                        <TextBlock Text="Повний шлях:" FontWeight="Bold" Margin="0,10,0,0"/>
+                                        <TextBlock x:Name="FileDetailPathText" Text="-" Margin="0,2,0,0" TextWrapping="Wrap" FontSize="10"/>
+
+                                        <TextBlock Text="Тип:" FontWeight="Bold" Margin="0,10,0,0"/>
+                                        <TextBlock x:Name="FileDetailTypeText" Text="-" Margin="0,2,0,0"/>
+
+                                        <TextBlock Text="Розмір:" FontWeight="Bold" Margin="0,10,0,0"/>
+                                        <TextBlock x:Name="FileDetailSizeText" Text="-" Margin="0,2,0,0"/>
+
+                                        <TextBlock Text="Створено:" FontWeight="Bold" Margin="0,10,0,0"/>
+                                        <TextBlock x:Name="FileDetailCreatedText" Text="-" Margin="0,2,0,0"/>
+
+                                        <TextBlock Text="Змінено:" FontWeight="Bold" Margin="0,10,0,0"/>
+                                        <TextBlock x:Name="FileDetailModifiedText" Text="-" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </ScrollViewer>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </TabItem>
+
+                <!-- Вкладка 3: Контроль версій -->
+                <TabItem Header="🔄 Git">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- Панель дій -->
+                        <Border Grid.Row="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="1"
+                                CornerRadius="4" Padding="15" Margin="0,0,0,10">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Статус Git -->
+                                <Grid Grid.Row="0" Margin="0,0,0,10">
+                                    <TextBlock Text="🔄 Контроль версій"
+                                               FontWeight="Bold" FontSize="14" VerticalAlignment="Center"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <TextBlock x:Name="GitStatusIndicator" Text="●" FontSize="16"
+                                                   VerticalAlignment="Center" Margin="0,0,5,0" Foreground="#4CAF50"/>
+                                        <TextBlock x:Name="GitStatusLabel" Text="Готово"
+                                                   VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Кнопки дій -->
+                                <StackPanel Grid.Row="1" Orientation="Horizontal">
+                                    <Button Content="💾 Зробити коміт" x:Name="GitCommitButton" Click="GitCommit_Click"
+                                            Background="#4CAF50" Foreground="White"
+                                            Padding="12,6" Margin="0,0,5,0"/>
+                                    <Button Content="🔍 Історія комітів" Click="GitShowHistory_Click"
+                                            Padding="12,6" Margin="5,0"/>
+                                    <Button Content="⏪ Відкотити версію" Click="GitRevert_Click"
+                                            Padding="12,6" Margin="5,0"/>
+                                    <Button Content="🔃 Оновити" Click="GitRefresh_Click"
+                                            Padding="12,6" Margin="5,0"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Історія комітів -->
+                        <Border Grid.Row="1" Background="White" BorderBrush="#E0E0E0"
+                                BorderThickness="1" CornerRadius="4">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <Border Grid.Row="0" Background="#F5F5F5" BorderBrush="#E0E0E0"
+                                        BorderThickness="0,0,0,1" Padding="10">
+                                    <TextBlock Text="📜 Історія комітів" FontWeight="Bold" FontSize="13"/>
+                                </Border>
+
+                                <DataGrid Grid.Row="1" x:Name="GitHistoryGrid"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          SelectionMode="Single"
+                                          CanUserAddRows="False"
+                                          GridLinesVisibility="Horizontal">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Hash" Binding="{Binding Hash}" Width="100">
+                                            <DataGridTextColumn.ElementStyle>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="FontFamily" Value="Consolas"/>
+                                                    <Setter Property="FontSize" Value="10"/>
+                                                </Style>
+                                            </DataGridTextColumn.ElementStyle>
+                                        </DataGridTextColumn>
+                                        <DataGridTextColumn Header="Повідомлення" Binding="{Binding Message}" Width="*"/>
+                                        <DataGridTextColumn Header="Автор" Binding="{Binding Author}" Width="150"/>
+                                        <DataGridTextColumn Header="Дата" Binding="{Binding Date}" Width="150"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </Border>
+
+                        <!-- Поле для коміту -->
+                        <Border Grid.Row="2" Background="#F5F5F5" BorderBrush="#E0E0E0"
+                                BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,10,0,0">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Text="💬 Повідомлення коміту:"
+                                           FontWeight="Bold" Margin="0,0,0,5"/>
+                                <TextBox Grid.Row="1" x:Name="CommitMessageTextBox"
+                                         Height="60" TextWrapping="Wrap"
+                                         AcceptsReturn="True"
+                                         VerticalScrollBarVisibility="Auto"
+                                         Controls:TextBoxHelper.Watermark="Опишіть зміни..."/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+        </Grid>
+
+        <!-- Статус бар -->
+        <Border Grid.Row="2"
+                Background="#F5F5F5"
+                BorderBrush="#E0E0E0"
+                BorderThickness="0,1,0,0"
+                Padding="15,10">
+            <Grid>
+                <TextBlock x:Name="StatusText" Text="Готово" FontSize="12"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="🔄 Оновити"
+                            Click="RefreshButton_Click"
+                            Padding="10,5" Margin="0,0,10,0"/>
+                    <Button Content="❌ Закрити"
+                            Click="CloseButton_Click"
+                            Padding="10,5"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Controls:MetroWindow>
