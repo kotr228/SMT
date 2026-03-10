@@ -1,0 +1,157 @@
+﻿* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+}
+
+#map {
+    width: 100%;
+    height: 100vh;
+    background: #e8f5e9;
+}
+
+/* 📍 Custom маркери */
+.custom-marker {
+    background: transparent;
+    border: none;
+}
+
+.marker-pin {
+    width: 30px;
+    height: 42px;
+    position: relative;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+    .marker-pin:hover {
+        transform: rotate(-45deg) scale(1.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+.marker-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    font-size: 16px;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.marker-label {
+    position: absolute;
+    top: 45px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    pointer-events: none;
+}
+
+/* 💬 Popups */
+.leaflet-popup-content-wrapper {
+    border-radius: 8px;
+    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4);
+}
+
+.leaflet-popup-content {
+    margin: 12px 16px;
+    line-height: 1.4;
+    font-size: 13px;
+}
+
+.marker-popup h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    color: #2196F3;
+}
+
+.marker-popup p {
+    margin: 4px 0;
+    color: #666;
+}
+
+.marker-popup small {
+    color: #999;
+    font-size: 11px;
+}
+
+.route-popup {
+    text-align: center;
+}
+
+    .route-popup b {
+        color: #2196F3;
+    }
+
+.area-popup h4 {
+    margin: 0 0 8px 0;
+    color: #1976D2;
+}
+
+.area-popup p {
+    margin: 0;
+    color: #666;
+}
+
+/* 🎮 Leaflet Controls */
+.leaflet-control-zoom {
+    border: none !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+    .leaflet-control-zoom a {
+        border-radius: 4px !important;
+        transition: all 0.2s ease;
+    }
+
+        .leaflet-control-zoom a:hover {
+            background: #2196F3 !important;
+            color: white !important;
+        }
+
+/* 🛤️ Polylines */
+.leaflet-interactive {
+    transition: stroke-width 0.2s ease;
+}
+
+    .leaflet-interactive:hover {
+        stroke-width: 4 !important;
+        cursor: pointer;
+    }
+
+/* 🗺️ Map tiles loading */
+.leaflet-tile-container {
+    transition: opacity 0.3s ease;
+}
+
+/* 📱 Responsive */
+@media (max-width: 768px) {
+    .marker-label {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+
+    .marker-pin {
+        width: 24px;
+        height: 36px;
+    }
+
+    .marker-icon {
+        font-size: 14px;
+    }
+}

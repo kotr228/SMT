@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36518.9
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DocControlService.Shared", "DocControlService.Shared\DocControlService.Shared.csproj", "{58BF8637-0F11-4AD7-BF4D-7DE0E0FB0116}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DocControlService", "DocControlService\DocControlService.csproj", "{D238FFFB-FCFC-43FE-B1FA-B56220B0137F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DocControlUI", "DocControlUI\DocControlUI.csproj", "{746BE772-957C-4AA3-B1B9-DB0DF750463F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DocControlAI", "DocControlAI\DocControlAI.csproj", "{D4631A25-B9CF-4C5F-8B7D-15E188A12C07}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DocControl.Maps.Core", "DocControl.Maps.Core\DocControl.Maps.Core.csproj", "{6FA3D2D3-E610-4A7F-89F5-F9C17430C92E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DocControlNetworkCore", "DocControlNetworkCore\DocControlNetworkCore.csproj", "{8A7E9F2B-1C3D-4E5F-9A7B-D2E3F4A5B6C7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{58BF8637-0F11-4AD7-BF4D-7DE0E0FB0116}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58BF8637-0F11-4AD7-BF4D-7DE0E0FB0116}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58BF8637-0F11-4AD7-BF4D-7DE0E0FB0116}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58BF8637-0F11-4AD7-BF4D-7DE0E0FB0116}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D238FFFB-FCFC-43FE-B1FA-B56220B0137F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D238FFFB-FCFC-43FE-B1FA-B56220B0137F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D238FFFB-FCFC-43FE-B1FA-B56220B0137F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D238FFFB-FCFC-43FE-B1FA-B56220B0137F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{746BE772-957C-4AA3-B1B9-DB0DF750463F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{746BE772-957C-4AA3-B1B9-DB0DF750463F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{746BE772-957C-4AA3-B1B9-DB0DF750463F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{746BE772-957C-4AA3-B1B9-DB0DF750463F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4631A25-B9CF-4C5F-8B7D-15E188A12C07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4631A25-B9CF-4C5F-8B7D-15E188A12C07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4631A25-B9CF-4C5F-8B7D-15E188A12C07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4631A25-B9CF-4C5F-8B7D-15E188A12C07}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6FA3D2D3-E610-4A7F-89F5-F9C17430C92E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FA3D2D3-E610-4A7F-89F5-F9C17430C92E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FA3D2D3-E610-4A7F-89F5-F9C17430C92E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FA3D2D3-E610-4A7F-89F5-F9C17430C92E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A7E9F2B-1C3D-4E5F-9A7B-D2E3F4A5B6C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A7E9F2B-1C3D-4E5F-9A7B-D2E3F4A5B6C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A7E9F2B-1C3D-4E5F-9A7B-D2E3F4A5B6C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A7E9F2B-1C3D-4E5F-9A7B-D2E3F4A5B6C7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {96EB3433-B10A-4C03-A969-E1B082114C2E}
+	EndGlobalSection
+EndGlobal
