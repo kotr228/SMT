@@ -1,0 +1,29 @@
+﻿{
+  "name": "DocControl.Maps.Core",
+  "version": "0.5.0",
+  "description": "Картографічне ядро з підтримкою онлайн/офлайн режимів, геокодування та роботи з геооб'єктами",
+  "author": "DocControl Team",
+  "dependencies": [
+    "Microsoft.Data.Sqlite >= 7.0.0",
+    "System.Text.Json >= 7.0.0"
+  ],
+  "api": {
+    "IMapService": "Робота з тайлами карт",
+    "IGeoCoder": "Геокодування адрес",
+    "IOfflineCache": "Офлайн-кеш тайлів",
+    "MapDataService": "Геооб'єкти (точки, маршрути, області)"
+  },
+  "features": [
+    "Online/Offline maps (OSM, Google, Bing)",
+    "Tile caching (SQLite)",
+    "Geocoding (Nominatim)",
+    "Route optimization",
+    "Network monitoring",
+    "Region download for offline use"
+  ],
+  "integrations": [
+    "DocControl.Geo.Core",
+    "DocControl.AI.Core",
+    "DocControlUI"
+  ]
+}

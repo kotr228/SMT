@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "DocControlService": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}

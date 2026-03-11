@@ -1,0 +1,339 @@
+﻿<Controls:MetroWindow x:Class="DocControlUI.Windows.GeoRoadmapEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="Редактор геодорожніх карт" 
+        Height="800" Width="1400"
+        WindowStartupLocation="CenterScreen"
+        WindowState="Maximized"
+        xmlns:Controls="http://metro.mahapps.com/winfx/xaml/controls"
+        Icon="/Assets/424.ico"
+        Background="{StaticResource BackgroundBrush}">
+
+    <Window.Resources>
+        <!-- Стилі кнопок -->
+        <Style TargetType="Button" x:Key="ToolButton">
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="MinWidth" Value="100"/>
+        </Style>
+
+        <!-- Стилі для іконок вузлів -->
+        <Style TargetType="Ellipse" x:Key="NodeIcon">
+            <Setter Property="Width" Value="16"/>
+            <Setter Property="Height" Value="16"/>
+            <Setter Property="Fill" Value="#2196F3"/>
+            <Setter Property="Stroke" Value="White"/>
+            <Setter Property="StrokeThickness" Value="2"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Панель інструментів -->
+        <Border Grid.Row="0" Padding="10">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="🗺️ Редактор геодорожніх карт" 
+                           FontSize="18" FontWeight="Bold" 
+                           VerticalAlignment="Center"/>
+                <TextBlock x:Name="RoadmapTitle" Text="" 
+                           FontSize="14" 
+                           Margin="20,0,0,0" VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Панель управління -->
+        <Border Grid.Row="1" Background="#F5F5F5" Padding="10" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Ліва панель - основні інструменти -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <Button Content="💾 Зберегти" Click="SaveRoadmap_Click" 
+                            Style="{StaticResource ToolButton}" Background="#4CAF50" Foreground="White"/>
+                    <Button Content="📍 Додати точку" Click="AddNode_Click" 
+                            Style="{StaticResource ToolButton}"/>
+                    <Button Content="🛤️ З'єднати" Click="ConnectNodes_Click" 
+                            Style="{StaticResource ToolButton}"/>
+                    <Button Content="🗺️ Область" Click="AddArea_Click" 
+                            Style="{StaticResource ToolButton}"/>
+                    <Separator Width="20" Background="Transparent"/>
+                    <Button Content="📐 Виміряти відстань" Click="MeasureDistance_Click" 
+                            Style="{StaticResource ToolButton}"/>
+                    <Button Content="🎯 Центрувати" Click="CenterMap_Click" 
+                            Style="{StaticResource ToolButton}"/>
+                </StackPanel>
+
+                <!-- Центр - вибір шаблону -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Text="Шаблон:" VerticalAlignment="Center" Margin="10,0"/>
+                    <ComboBox x:Name="TemplateComboBox" Width="200" 
+                              SelectionChanged="Template_SelectionChanged"/>
+                    <Button Content="📋 Застосувати" Click="ApplyTemplate_Click" 
+                            Margin="5" Padding="10,5"/>
+                </StackPanel>
+
+                <!-- Права панель - додаткові опції -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button Content="🔍 Геокодування" Click="Geocode_Click" 
+                            Style="{StaticResource ToolButton}"/>
+                    <Button Content="📤 Експорт" Click="Export_Click" 
+                            Style="{StaticResource ToolButton}"/>
+                    <Button Content="❌ Закрити" Click="Close_Click" 
+                            Style="{StaticResource ToolButton}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Основний контент -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="300"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Ліва панель - список вузлів -->
+            <Border Grid.Column="0" Background="White" BorderBrush="#E0E0E0" BorderThickness="0,0,1,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="📍 Точки маршруту" 
+                               FontSize="16" FontWeight="Bold" 
+                               Padding="10" Background="#F5F5F5"/>
+
+                    <ListBox Grid.Row="1" x:Name="NodesListBox" 
+                             SelectionChanged="Node_SelectionChanged"
+                             Margin="5">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="5">
+                                    <Ellipse Width="12" Height="12" Margin="0,0,10,0">
+                                        <Ellipse.Fill>
+                                            <SolidColorBrush Color="{Binding Color}"/>
+                                        </Ellipse.Fill>
+                                    </Ellipse>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Title}" FontWeight="Bold"/>
+                                        <TextBlock Text="{Binding Type}" FontSize="10" Foreground="Gray"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <StackPanel Grid.Row="2" Orientation="Vertical" Margin="5">
+                        <Button Content="➕ Додати точку" Click="AddNodeFromPanel_Click" 
+                                Margin="5" Padding="10,5"/>
+                        <Button Content="✏️ Редагувати" Click="EditNode_Click" 
+                                Margin="5" Padding="10,5"/>
+                        <Button Content="🗑️ Видалити" Click="DeleteNode_Click" 
+                                Margin="5" Padding="10,5" Background="#F44336" Foreground="White"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Центральна панель - карта -->
+            <Border Grid.Column="1" Background="White">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Інформаційна панель карти -->
+                    <!-- ЗАГЛУШКА ДЛЯ КАРТИ (v0.3) -->
+                    <!-- В v0.4 замінимо на реальний WebView2 або інший map control -->
+                    <Border Grid.Row="1" Background="White">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Інформаційна панель карти -->
+                            <Border Grid.Row="0" Background="#F5F5F5" Padding="10" BorderBrush="#E0E0E0" BorderThickness="0,0,0,1">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Провайдер:" VerticalAlignment="Center"/>
+                                    <ComboBox x:Name="MapProviderComboBox" Width="150" Margin="5" 
+                          SelectionChanged="MapProvider_Changed">
+                                        <ComboBoxItem Content="OpenStreetMap" IsSelected="True"/>
+                                        <ComboBoxItem Content="GoogleMaps"/>
+                                        <ComboBoxItem Content="BingMaps"/>
+                                    </ComboBox>
+
+                                    <TextBlock Text="Зум:" VerticalAlignment="Center" Margin="20,0,5,0"/>
+                                    <Slider x:Name="ZoomSlider" Width="150" Minimum="1" Maximum="18" Value="10" 
+                        ValueChanged="Zoom_ValueChanged" TickFrequency="1"/>
+                                    <TextBlock Text="{Binding ElementName=ZoomSlider, Path=Value, StringFormat='{}{0:F0}'}" 
+                           VerticalAlignment="Center" Margin="5,0"/>
+
+                                    <TextBlock x:Name="CoordinatesText" Text="Lat: -, Lng: -" 
+                           VerticalAlignment="Center" Margin="20,0,0,0" 
+                           FontFamily="Consolas"/>
+
+                                    <Button Content="🔄 Перезавантажити" Click="ReloadMap_Click" 
+                        Margin="20,0,0,0" Padding="8,3" FontSize="11"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- WebView2 для карти -->
+                            <Border Grid.Row="1" x:Name="MapContainer" Background="White">
+                                <!-- WebView2 буде додано програмно в code-behind -->
+                                <Grid x:Name="MapLoadingPanel">
+                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                        <TextBlock Text="🗺️" FontSize="48" HorizontalAlignment="Center" 
+                               Margin="0,0,0,10"/>
+                                        <TextBlock Text="Завантаження карти..." FontSize="16" 
+                               HorizontalAlignment="Center" Foreground="Gray"/>
+                                        <TextBlock x:Name="MapLoadingStatus" Text="Ініціалізація WebView2..." 
+                               FontSize="12" HorizontalAlignment="Center" 
+                               Foreground="LightGray" Margin="0,5,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Права панель - властивості -->
+            <Border Grid.Column="2" Background="White" BorderBrush="#E0E0E0" BorderThickness="1,0,0,0">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10">
+                        <TextBlock Text="⚙️ Властивості" 
+                                   FontSize="16" FontWeight="Bold" 
+                                   Margin="0,0,0,10"/>
+
+                        <!-- Загальні властивості карти -->
+                        <GroupBox Header="Карта" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="Назва:"/>
+                                <TextBox x:Name="MapNameTextBox" Margin="0,5,0,10"/>
+
+                                <TextBlock Text="Опис:"/>
+                                <TextBox x:Name="MapDescriptionTextBox" 
+                                         TextWrapping="Wrap" Height="60" 
+                                         Margin="0,5,0,10" AcceptsReturn="True"/>
+
+                                <TextBlock Text="Центр карти:"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                                    <TextBlock Text="Lat:" VerticalAlignment="Center"/>
+                                    <TextBox x:Name="CenterLatTextBox" Width="80" Margin="5,0"/>
+                                    <TextBlock Text="Lng:" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                    <TextBox x:Name="CenterLngTextBox" Width="80" Margin="5,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!-- Властивості вибраного вузла -->
+                        <GroupBox Header="Вибрана точка" x:Name="NodePropertiesGroup" 
+                                  Margin="0,0,0,10" Visibility="Collapsed">
+                            <StackPanel>
+                                <TextBlock Text="Назва:"/>
+                                <TextBox x:Name="NodeTitleTextBox" Margin="0,5,0,10"/>
+
+                                <TextBlock Text="Опис:"/>
+                                <TextBox x:Name="NodeDescriptionTextBox" 
+                                         TextWrapping="Wrap" Height="60" 
+                                         Margin="0,5,0,10" AcceptsReturn="True"/>
+
+                                <TextBlock Text="Тип:"/>
+                                <ComboBox x:Name="NodeTypeComboBox" Margin="0,5,0,10">
+                                    <ComboBoxItem Content="Milestone"/>
+                                    <ComboBoxItem Content="Location"/>
+                                    <ComboBoxItem Content="Office"/>
+                                    <ComboBoxItem Content="Site"/>
+                                    <ComboBoxItem Content="Meeting"/>
+                                    <ComboBoxItem Content="Checkpoint"/>
+                                    <ComboBoxItem Content="Custom"/>
+                                </ComboBox>
+
+                                <TextBlock Text="Колір:"/>
+                                <ComboBox x:Name="NodeColorComboBox" Margin="0,5,0,10">
+                                    <ComboBoxItem Content="🔵 Синій" Tag="#2196F3" IsSelected="True"/>
+                                    <ComboBoxItem Content="🔴 Червоний" Tag="#F44336"/>
+                                    <ComboBoxItem Content="🟢 Зелений" Tag="#4CAF50"/>
+                                    <ComboBoxItem Content="🟡 Жовтий" Tag="#FFEB3B"/>
+                                    <ComboBoxItem Content="🟣 Фіолетовий" Tag="#9C27B0"/>
+                                    <ComboBoxItem Content="🟠 Помаранчевий" Tag="#FF9800"/>
+                                </ComboBox>
+
+                                <TextBlock Text="Координати:"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,5,0,5">
+                                    <TextBlock Text="Lat:" VerticalAlignment="Center"/>
+                                    <TextBox x:Name="NodeLatTextBox" Width="80" Margin="5,0"/>
+                                    <TextBlock Text="Lng:" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                    <TextBox x:Name="NodeLngTextBox" Width="80" Margin="5,0"/>
+                                </StackPanel>
+
+                                <TextBlock Text="Адреса:"/>
+                                <TextBox x:Name="NodeAddressTextBox" Margin="0,5,0,10"/>
+
+                                <Button Content="🔍 Знайти на карті" Click="FindNodeOnMap_Click" 
+                                        Margin="0,5,0,5"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!-- Статистика -->
+                        <GroupBox Header="📊 Статистика" Margin="0,0,0,10">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="Точок:" Width="100"/>
+                                    <TextBlock x:Name="NodeCountText" Text="0" FontWeight="Bold"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="Маршрутів:" Width="100"/>
+                                    <TextBlock x:Name="RouteCountText" Text="0" FontWeight="Bold"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="Областей:" Width="100"/>
+                                    <TextBlock x:Name="AreaCountText" Text="0" FontWeight="Bold"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <TextBlock Text="Загальна відстань:" Width="100"/>
+                                    <TextBlock x:Name="TotalDistanceText" Text="0 км" FontWeight="Bold"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!-- Швидкі дії -->
+                        <GroupBox Header="⚡ Швидкі дії">
+                            <StackPanel>
+                                <Button Content="🎯 Оптимізувати маршрут"
+                                        Click="OptimizeRoute_Click" Margin="0,5"/>
+                                <Button Content="💾 Зберегти як шаблон"
+                                        Click="SaveAsTemplate_Click" Margin="0,5"/>
+                            </StackPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- Статус бар -->
+        <StatusBar Grid.Row="3">
+            <StatusBarItem>
+                <TextBlock x:Name="StatusText" Text="Готово"/>
+            </StatusBarItem>
+            <Separator/>
+            <StatusBarItem>
+                <TextBlock x:Name="MapModeText" Text="Режим: Перегляд"/>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</Controls:MetroWindow>
