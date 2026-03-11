@@ -1,0 +1,10 @@
+﻿{
+  "DefaultProvider": "OpenStreetMap",
+  "CachePath": "MapCache",
+  "MaxCacheSizeMB": 500,
+  "CacheExpirationDays": 30,
+  "EnableOfflineMode": true,
+  "AutoDownloadTiles": true,
+  "NominatimUrl": "https://nominatim.openstreetmap.org",
+  "MaxConcurrentDownloads": 4
+}

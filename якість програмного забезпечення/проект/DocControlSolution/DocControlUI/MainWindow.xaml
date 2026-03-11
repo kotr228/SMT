@@ -1,0 +1,679 @@
+﻿<Controls:MetroWindow x:Class="DocControlUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DocControlUI.Converters"
+        xmlns:Controls="http://metro.mahapps.com/winfx/xaml/controls"
+        mc:Ignorable="d"
+        Title="Coffe Cat" 
+        Height="718" Width="1320"
+        WindowStartupLocation="CenterScreen"
+        Icon="/Assets/424.ico"
+        Background="{StaticResource BackgroundBrush}"
+        >
+    <Window.Resources>
+        <!-- Конвертери -->
+        <local:BoolToColorConverter x:Key="BoolToColorConverter"/>
+        <local:BoolToTextConverter x:Key="BoolToTextConverter"/>
+        <local:IntToAccessTextConverter x:Key="IntToAccessTextConverter"/>
+        <local:FileSizeConverter x:Key="FileSizeConverter"/>
+
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="MinWidth" Value="100"/>
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Background="{StaticResource BackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Панель статусу -->
+        <Border Grid.Row="0" Padding="10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Image Grid.Column="0"
+                       Source="/Assets/424.png"  Width="32"
+                       Height="32"
+                       Margin="0,0,10,0"
+                       VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <TextBlock Text="Статус сервісу:" FontWeight="Bold"/>
+                    <TextBlock x:Name="StatusText" Text="Невідомо" Margin="10,0,0,0"/>
+                </StackPanel>
+
+                <Button Grid.Column="2" Content="Оновити статус" Click="RefreshStatus_Click" />
+            </Grid>
+        </Border>
+
+        <!-- Головний контент -->
+        <TabControl Grid.Row="1" Margin="10" x:Name="MainTabControl">
+
+            <!-- Вкладка Директорії -->
+            <TabItem Header="📁 Директорії">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Панель управління -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5">
+                        <Button Content="➕ Додати" Click="AddDirectory_Click"/>
+                        <Button Content="✏️ Перейменувати" Click="RenameDirectory_Click"/>
+                        <Button Content="🔍 Сканувати" Click="ScanDirectory_Click"/>
+                        <Separator Width="20" Background="Transparent"/>
+
+                        <!-- НОВИЙ МЕНЕДЖЕР ДИРЕКТОРІЙ -->
+                        <Button Content="📁 Менеджер Директорій" Click="OpenDirectoryManager_Click"
+                                Background="#FF9800" Foreground="White"
+                                ToolTip="Розширений пошук та редагування директорій"/>
+                    </StackPanel>
+
+                    <!-- Список директорій -->
+                    <DataGrid Grid.Row="1" x:Name="DirectoriesGrid" 
+                              AutoGenerateColumns="False" 
+                              IsReadOnly="True"
+                              SelectionMode="Single"
+                              CanUserAddRows="False"
+                              SelectionChanged="DirectoriesGrid_SelectionChanged"
+                              Margin="5">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
+                            <DataGridTextColumn Header="Назва" Binding="{Binding Name}" Width="200"/>
+                            <DataGridTextColumn Header="Шлях" Binding="{Binding Browse}" Width="*"/>
+                            <DataGridCheckBoxColumn Header="Відкрито" Binding="{Binding IsShared, Mode=OneWay}" Width="80"/>
+                            <DataGridTextColumn Header="Дозволені пристрої" Binding="{Binding AllowedDevicesCount, Mode=OneWay}" Width="150"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Деталі -->
+                    <GroupBox Grid.Row="2" Header="Дозволені пристрої" Margin="5" Padding="5">
+                        <ListBox x:Name="AllowedDevicesList" Height="100"/>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <!-- Вкладка Мережеві вузли (Network Core) -->
+            <TabItem Header="💻 Мережа">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Панель управління -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5">
+                        <TextBlock Text="Мережеве ядро:" FontWeight="Bold" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="NetworkCoreStatusText" Text="Невідомо" Margin="10,0" VerticalAlignment="Center"/>
+                        <Button Content="🔄 Оновити" Click="RefreshNetworkNodes_Click"/>
+                        <Separator Width="20" Background="Transparent"/>
+                        <Button Content="🌐 Пошук вузлів" Click="DiscoverNodes_Click" ToolTip="Примусове широкомовлення для виявлення вузлів"/>
+                        <Button Content="📋 Детальна інформація" Click="ShowNodeDetails_Click" ToolTip="Показати деталі обраного вузла"/>
+                    </StackPanel>
+
+                    <!-- Розділений екран: 3 колонки (пристрої | директорії | доступи) -->
+                    <Grid Grid.Row="1" Margin="5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="5"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="5"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Колонка 1: Знайдені пристрої -->
+                        <GroupBox Grid.Column="0" Header="🔍 Знайдені пристрої">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Інфо про локальну систему -->
+                                <Border Grid.Row="0" BorderBrush="#4CAF50" BorderThickness="2" CornerRadius="5" Padding="10" Margin="0,0,0,5" Background="#E8F5E9">
+                                    <StackPanel>
+                                        <TextBlock Text="💻 Цей комп'ютер" FontWeight="Bold" FontSize="14" Foreground="#1B5E20"/>
+                                        <TextBlock x:Name="LocalSystemInfo" Text="Завантаження..." Margin="0,5,0,0" TextWrapping="Wrap" Foreground="#2E7D32"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Список знайдених пристроїв з БД -->
+                                <ListBox Grid.Row="1" x:Name="DevicesListBox"
+                                         SelectionChanged="DevicesListBox_SelectionChanged"
+                                         MouseDoubleClick="DevicesListBox_MouseDoubleClick"
+                                         BorderBrush="#FF9800" BorderThickness="2">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="3" Padding="8" Margin="2"
+                                                    Background="{Binding Access, Converter={StaticResource BoolToColorConverter}}">
+                                                <StackPanel>
+                                                    <!-- Назва пристрою з онлайн індикатором -->
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="●" FontSize="14" Margin="0,0,5,0">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Foreground" Value="#9E9E9E"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsOnline}" Value="True">
+                                                                            <Setter Property="Foreground" Value="#4CAF50"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                        <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12" Foreground="#212121" TextWrapping="Wrap"/>
+                                                    </StackPanel>
+
+                                                    <!-- Статус онлайн/офлайн -->
+                                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                        <TextBlock Text="📡" FontSize="10" Margin="0,0,3,0"/>
+                                                        <TextBlock FontSize="10" Foreground="#616161">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Text" Value="Офлайн"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsOnline}" Value="True">
+                                                                            <Setter Property="Text" Value="Онлайн"/>
+                                                                            <Setter Property="Foreground" Value="#4CAF50"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </StackPanel>
+
+                                                    <!-- Статус доступу -->
+                                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                                        <TextBlock Text="{Binding AccessDirectoriesCount, Converter={StaticResource IntToAccessTextConverter}}"
+                                                                   FontSize="10" Foreground="#616161"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </GroupBox>
+
+                        <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="Gray"/>
+
+                        <!-- Колонка 2: Директорії обраного пристрою -->
+                        <GroupBox Grid.Column="2" Header="📁 Директорії пристрою">
+                            <ListBox x:Name="RemoteDirectoriesListBox" BorderBrush="#2196F3" BorderThickness="2">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="LightGray" BorderThickness="1" CornerRadius="3" Padding="6" Margin="2" Background="White">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12" Foreground="#1565C0"/>
+                                                <TextBlock Text="{Binding Browse, StringFormat='Шлях: {0}'}" FontSize="10" Foreground="#757575" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </GroupBox>
+
+                        <GridSplitter Grid.Column="3" Width="5" HorizontalAlignment="Stretch" Background="Gray"/>
+
+                        <!-- Колонка 3: Управління доступами до власних директорій -->
+                        <GroupBox Grid.Column="4" Header="🔐 Надати доступ">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Вибір власної директорії -->
+                                <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                                    <TextBlock Text="Оберіть вашу директорію:" FontWeight="Bold" Margin="0,0,0,5"/>
+                                    <ComboBox x:Name="MyDirectoriesComboBox" DisplayMemberPath="Name" SelectionChanged="MyDirectoriesComboBox_SelectionChanged"/>
+                                </StackPanel>
+
+                                <!-- Список пристроїв з доступом до обраної директорії -->
+                                <GroupBox Grid.Row="1" Header="Пристрої з доступом:">
+                                    <ListBox x:Name="DirectoryAccessListBox" BorderBrush="#4CAF50" BorderThickness="1">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="✅" Margin="0,0,5,0"/>
+                                                    <TextBlock Text="{Binding DeviceName}" FontSize="11"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                </GroupBox>
+
+                                <!-- Кнопки управління доступом -->
+                                <StackPanel Grid.Row="2" Margin="0,10,0,0">
+                                    <!-- Інструкція -->
+                                    <Border Background="#E3F2FD" BorderBrush="#2196F3" BorderThickness="1" CornerRadius="3" Padding="8" Margin="0,0,0,8">
+                                        <StackPanel>
+                                            <TextBlock Text="ℹ️ Як надати доступ:" FontWeight="Bold" FontSize="10" Foreground="#1976D2" Margin="0,0,0,3"/>
+                                            <TextBlock Text="1. Оберіть пристрій зліва" FontSize="9" Foreground="#424242" Margin="0,1,0,0"/>
+                                            <TextBlock Text="2. Оберіть вашу директорію вгорі" FontSize="9" Foreground="#424242" Margin="0,1,0,0"/>
+                                            <TextBlock Text="3. Натисніть 'Надати доступ'" FontSize="9" Foreground="#424242" Margin="0,1,0,0"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Button Content="✅ Надати доступ" Click="GrantAccessToDevice_Click" Margin="0,0,0,5" Background="#4CAF50" Foreground="White"/>
+                                    <Button Content="❌ Відкликати доступ" Click="RevokeAccessFromDevice_Click" Background="#F44336" Foreground="White"/>
+                                </StackPanel>
+                            </Grid>
+                        </GroupBox>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <!-- DEPRECATED: Старі пристрої (залишаємо для сумісності) -->
+            <TabItem Header="⚙️ Пристрої (старе)" Visibility="Collapsed">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Панель управління -->
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5">
+                        <Button Content="➕ Додати пристрій" Click="AddDevice_Click"/>
+                        <Button Content="🗑️ Видалити пристрій" Click="RemoveDevice_Click"/>
+                    </StackPanel>
+
+                    <!-- Список пристроїв -->
+                    <DataGrid Grid.Row="1" x:Name="DevicesGrid"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              SelectionMode="Single"
+                              CanUserAddRows="False"
+                              Margin="5">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
+                            <DataGridTextColumn Header="Назва пристрою" Binding="{Binding Name}" Width="*"/>
+                            <DataGridCheckBoxColumn Header="Дозволено доступ" Binding="{Binding Access, Mode=OneWay}" Width="150"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Управління доступом -->
+                    <GroupBox Grid.Row="2" Header="Керування доступом" Margin="5" Padding="10">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" Text="Директорія:" Foreground="#8C5A2D"/>
+                                <ComboBox Grid.Column="1" x:Name="AccessDirectoryCombo" 
+                                          DisplayMemberPath="Name" Margin="5"/>
+
+                                <TextBlock Grid.Column="2" Text="Пристрій:" Foreground="#8C5A2D"/>
+                                <ComboBox Grid.Column="3" x:Name="AccessDeviceCombo" 
+                                          DisplayMemberPath="Name" Margin="5"/>
+
+                                <StackPanel Grid.Column="4" Orientation="Horizontal">
+                                    <Button Content="✅ Надати доступ" Click="GrantAccess_Click" 
+                                            Background="#4CAF50" Foreground="White"/>
+                                    <Button Content="❌ Відкликати доступ" Click="RevokeAccess_Click" 
+                                            Background="#F44336" Foreground="White"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <!-- Вкладка Помилки -->
+            <TabItem Header="⚠️ Помилки">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="5">
+                        <TextBlock Text="Непрочитаних помилок:" VerticalAlignment="Center" FontWeight="Bold"/>
+                        <TextBlock x:Name="UnresolvedErrorsCount" Text="0" Margin="5" VerticalAlignment="Center" Foreground="Red" FontWeight="Bold"/>
+                        <Button Content="🔃 Оновити" Click="RefreshErrors_Click" Margin="10,0,0,0"/>
+                        <Button Content="✅ Позначити як вирішені" Click="MarkErrorsResolved_Click"/>
+                        <Button Content="🗑️ Очистити вирішені" Click="ClearResolvedErrors_Click"/>
+                    </StackPanel>
+
+                    <DataGrid Grid.Row="1" x:Name="ErrorsGrid" 
+                              AutoGenerateColumns="False" 
+                              IsReadOnly="True"
+                              SelectionMode="Single"
+                              Margin="5">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Час" Binding="{Binding Timestamp}" Width="150"/>
+                            <DataGridTextColumn Header="Тип" Binding="{Binding ErrorType}" Width="150"/>
+                            <DataGridTextColumn Header="Опис для користувача" Binding="{Binding UserFriendlyMessage}" Width="*"/>
+                            <DataGridCheckBoxColumn Header="Вирішено" Binding="{Binding IsResolved, Mode=OneWay}" Width="80"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <GroupBox Grid.Row="2" Header="Детальна інформація" Margin="5" Height="150">
+                        <ScrollViewer>
+                            <TextBlock x:Name="ErrorDetailsText" TextWrapping="Wrap" Padding="5"/>
+                        </ScrollViewer>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <!-- Вкладка Дорожня карта -->
+            <TabItem Header="🗺️ Дорожня карта">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Панель вибору директорії -->
+                    <GroupBox Grid.Row="0" Header="Вибір директорії" Margin="5" Padding="10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="Директорія:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <ComboBox Grid.Column="1" x:Name="RoadmapDirectoryCombo"
+                                      DisplayMemberPath="Name"
+                                      SelectionChanged="RoadmapDirectoryCombo_SelectionChanged"/>
+                            <Button Grid.Column="2" Content="🔍 Аналізувати" Click="AnalyzeForRoadmap_Click"
+                                    Margin="10,0,0,0" Padding="10,5"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Панель управління -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="5">
+                        <Button Content="➕ Створити карту" Click="CreateRoadmap_Click"/>
+                        <Button Content="📁 Завантажити" Click="LoadRoadmap_Click"/>
+                        <Button Content="💾 Зберегти як JSON" Click="ExportRoadmapJson_Click"/>
+                        <Button Content="🖼️ Зберегти як зображення" Click="ExportRoadmapImage_Click"/>
+                        <Button Content="🗑️ Видалити" Click="DeleteRoadmap_Click"/>
+                    </StackPanel>
+
+                    <!-- Візуалізація timeline -->
+                    <GroupBox Grid.Row="2" Header="Хронологічна карта подій" Margin="5">
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl x:Name="TimelineView">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderThickness="0,0,0,2" Padding="10" Margin="5">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="150"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Text="{Binding EventDate, StringFormat='dd.MM.yyyy'}" 
+                                                               FontWeight="Bold"/>
+                                                    <TextBlock Text="{Binding EventDate, StringFormat='HH:mm'}" 
+                                                               FontSize="10"/>
+                                                    <TextBlock Text="{Binding Category}" 
+                                                               FontSize="10" FontStyle="Italic" Margin="0,5,0,0"/>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                                    <TextBlock Text="{Binding Title}" FontWeight="Bold"/>
+                                                    <TextBlock Text="{Binding Description}" 
+                                                               TextWrapping="Wrap" Margin="0,3,0,0"/>
+                                                    <TextBlock Text="{Binding FilePath}" 
+                                                               FontSize="10" Margin="0,3,0,0"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </GroupBox>
+
+                    <!-- Статистика -->
+                    <GroupBox Grid.Row="3" Header="Статистика" Margin="5" Padding="10">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Всього подій:" Margin="0,0,5,0"/>
+                            <TextBlock x:Name="TotalEventsText" Text="0" FontWeight="Bold" Margin="0,0,20,0"/>
+                            <TextBlock Text="Період:" Margin="0,0,5,0"/>
+                            <TextBlock x:Name="DateRangeText" Text="-" FontWeight="Bold"/>
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <!-- Вкладка Налаштування -->
+            <TabItem Header="⚙️ Налаштування">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="20">
+                        <!-- Загальні налаштування -->
+                        <GroupBox Header="📋 Загальні налаштування" Padding="10" Margin="0,0,0,20">
+                            <StackPanel>
+                                <CheckBox x:Name="AutoShareOnAddCheckbox"
+                                          Content="Автоматично відкривати доступ при додаванні директорії"
+                                          Margin="0,5"/>
+                                <CheckBox x:Name="EnableUpdateNotificationsCheckbox"
+                                          Content="Показувати повідомлення про оновлення програми"
+                                          Margin="0,5"/>
+
+                                <Button Content="💾 Зберегти налаштування"
+                                        Click="SaveSettings_Click"
+                                        HorizontalAlignment="Left"
+                                        Margin="0,15,0,0"
+                                        Background="#4CAF50"
+                                        Foreground="White"/>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!-- Налаштування версіонування (Git) -->
+                        <GroupBox Header="🔄 Налаштування версіонування (Git)" Padding="10" Margin="0,0,0,20">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="200"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="Інтервал коміту (хвилин):" Foreground="Black"/>
+                                    <TextBox Grid.Column="1" x:Name="CommitIntervalTextBox"
+                                             Text="720" Width="150" HorizontalAlignment="Left"/>
+                                    <Button Grid.Column="2" Content="Зберегти"
+                                            Click="SaveCommitInterval_Click" Margin="10,5"/>
+                                    <TextBlock Grid.Column="3" Text="(за замовчуванням: 720 = 12 годин)"
+                                               Foreground="Gray" FontStyle="Italic" VerticalAlignment="Center"/>
+                                </Grid>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,5">
+                                    <Button Content="🔄 Виконати коміт зараз"
+                                            Click="ForceCommit_Click"
+                                            Background="#4CAF50" Foreground="White"/>
+                                    <Button Content="⏪ Відкат версії"
+                                            Click="RevertVersion_Click" Margin="5,0"/>
+                                    <Button Content="🔍 Історія комітів"
+                                            Click="ShowCommitHistory_Click" Margin="5,0"/>
+                                    <Button Content="🔃 Оновити"
+                                            Click="RefreshVersionControl_Click" Margin="5,0"/>
+                                </StackPanel>
+
+                                <GroupBox Header="Статус контролю версій директорій" Margin="0,10,0,10">
+                                    <DataGrid x:Name="VersionControlGrid"
+                                              AutoGenerateColumns="False"
+                                              IsReadOnly="True"
+                                              SelectionMode="Single"
+                                              MaxHeight="200">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Директорія" Binding="{Binding DirectoryName}" Width="200"/>
+                                            <DataGridTextColumn Header="Статус Git" Binding="{Binding GitStatus}" Width="100"/>
+                                            <DataGridTextColumn Header="Останній коміт" Binding="{Binding LastCommit}" Width="*"/>
+                                            <DataGridTextColumn Header="Час" Binding="{Binding LastCommitTime}" Width="150"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </GroupBox>
+
+                                <GroupBox Header="Лог комітів" Margin="0,0,0,0">
+                                    <DataGrid x:Name="CommitLogGrid"
+                                              AutoGenerateColumns="False"
+                                              IsReadOnly="True"
+                                              MaxHeight="200">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Час" Binding="{Binding Timestamp}" Width="150"/>
+                                            <DataGridTextColumn Header="Директорія" Binding="{Binding DirectoryPath}" Width="200"/>
+                                            <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="100"/>
+                                            <DataGridTextColumn Header="Повідомлення" Binding="{Binding Message}" Width="*"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </GroupBox>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!-- Мережа -->
+                        <GroupBox Header="🔌 Налаштування мережі" Padding="10" Margin="0,0,0,20">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Button Content="🔍 Сканувати мережу" Click="ScanNetwork_Click"/>
+                                    <Button Content="🔃 Оновити інтерфейси" Click="RefreshNetworkInterfaces_Click" Margin="5,0"/>
+                                    <TextBlock x:Name="ScanStatusText" Text="" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                </StackPanel>
+
+                                <GroupBox Header="Мережеві інтерфейси ПК" Margin="0,0,0,10">
+                                    <DataGrid x:Name="NetworkInterfacesGrid"
+                                              AutoGenerateColumns="False"
+                                              IsReadOnly="True"
+                                              MaxHeight="150">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Назва" Binding="{Binding Name}" Width="200"/>
+                                            <DataGridTextColumn Header="IP адреса" Binding="{Binding IpAddress}" Width="150"/>
+                                            <DataGridTextColumn Header="MAC адреса" Binding="{Binding MacAddress}" Width="150"/>
+                                            <DataGridTextColumn Header="Тип" Binding="{Binding NetworkType}" Width="100"/>
+                                            <DataGridCheckBoxColumn Header="Активний" Binding="{Binding IsActive, Mode=OneWay}" Width="80"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </GroupBox>
+
+                                <GroupBox Header="Пристрої в мережі">
+                                    <DataGrid x:Name="NetworkDevicesGrid"
+                                              AutoGenerateColumns="False"
+                                              IsReadOnly="True"
+                                              MaxHeight="150">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="IP адреса" Binding="{Binding IpAddress}" Width="150"/>
+                                            <DataGridTextColumn Header="MAC адреса" Binding="{Binding MacAddress}" Width="150"/>
+                                            <DataGridTextColumn Header="Ім'я хоста" Binding="{Binding HostName}" Width="*"/>
+                                            <DataGridCheckBoxColumn Header="Онлайн" Binding="{Binding IsOnline, Mode=OneWay}" Width="80"/>
+                                            <DataGridTextColumn Header="Останнє з'єднання" Binding="{Binding LastSeen, StringFormat='HH:mm:ss'}" Width="120"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </GroupBox>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!-- API та сервіси -->
+                        <GroupBox Header="☁️ API та зовнішні сервіси" Padding="10" Margin="0,0,0,20">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Button Content="➕ Додати сервіс" Click="AddExternalService_Click"/>
+                                    <Button Content="✏️ Редагувати" Click="EditExternalService_Click" Margin="5,0"/>
+                                    <Button Content="🗑️ Видалити" Click="DeleteExternalService_Click" Margin="5,0"/>
+                                    <Button Content="🔌 Тест з'єднання" Click="TestExternalService_Click" Margin="5,0"/>
+                                </StackPanel>
+
+                                <DataGrid x:Name="ExternalServicesGrid"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          SelectionMode="Single"
+                                          MaxHeight="150"
+                                          Margin="0,0,0,10">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Назва" Binding="{Binding Name}" Width="150"/>
+                                        <DataGridTextColumn Header="Тип" Binding="{Binding ServiceType}" Width="100"/>
+                                        <DataGridTextColumn Header="URL" Binding="{Binding Url}" Width="*"/>
+                                        <DataGridCheckBoxColumn Header="Активний" Binding="{Binding IsActive, Mode=OneWay}" Width="80"/>
+                                        <DataGridTextColumn Header="Останнє використання" Binding="{Binding LastUsed, StringFormat='yyyy-MM-dd HH:mm'}" Width="150"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <TextBlock TextWrapping="Wrap" Foreground="Gray" FontStyle="Italic">
+                                    💡 Підказка: Тут ви можете налаштувати API endpoints для відправки дорожніх карт та інших даних на зовнішні сервери.
+                                </TextBlock>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <!-- Інформація про сервіс -->
+                        <GroupBox Header="ℹ️ Інформація про сервіс" Padding="10" Margin="0,0,0,20">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Час запуску:" FontWeight="Bold" Foreground="Black" Margin="0,5"/>
+                                <TextBlock Grid.Row="0" Grid.Column="1" x:Name="StartTimeText" Text="-" Foreground="Black" Margin="10,5"/>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Всього директорій:" FontWeight="Bold" Foreground="Black" Margin="0,5"/>
+                                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TotalDirsText" Text="-" Foreground="Black" Margin="10,5"/>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Відкритих шарів:" FontWeight="Bold" Foreground="Black" Margin="0,5"/>
+                                <TextBlock Grid.Row="2" Grid.Column="1" x:Name="SharedDirsText" Text="-" Foreground="Black" Margin="10,5"/>
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Зареєстрованих пристроїв:" FontWeight="Bold" Foreground="Black" Margin="0,5"/>
+                                <TextBlock Grid.Row="3" Grid.Column="1" x:Name="DevicesCountText" Text="-" Foreground="Black" Margin="10,5"/>
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Text="Останній коміт:" FontWeight="Bold" Foreground="Black" Margin="0,5"/>
+                                <TextBlock Grid.Row="4" Grid.Column="1" x:Name="LastCommitText" Text="-" Foreground="Black" Margin="10,5"/>
+
+                                <TextBlock Grid.Row="5" Grid.Column="0" Text="Інтервал коміту:" FontWeight="Bold" Foreground="Black" Margin="0,5"/>
+                                <TextBlock Grid.Row="5" Grid.Column="1" x:Name="CommitIntervalText" Text="-" Foreground="Black" Margin="10,5"/>
+                            </Grid>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <!-- Статус бар -->
+        <StatusBar Grid.Row="2">
+            <StatusBarItem>
+                <TextBlock x:Name="StatusBarText" Text="Готово"/>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</Controls:MetroWindow>

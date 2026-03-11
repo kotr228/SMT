@@ -1,0 +1,345 @@
+﻿<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocControl GeoMap</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+
+    <!-- Leaflet JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+
+    <!-- Leaflet Providers Plugin -->
+    <script src="leaflet-providers.js"></script>
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="map"></div>
+
+    <script>
+        // 🗺️ Ініціалізація карти
+        const map = L.map('map', {
+            center: [50.4501, 30.5234], // Київ за замовчуванням
+            zoom: 10,
+            zoomControl: true,
+            attributionControl: false
+        });
+
+        // Tile layers
+        const providers = {
+            'OpenStreetMap': L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }),
+            'GoogleMaps': L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                attribution: '© Google Maps'
+            }),
+            'BingMaps': L.tileLayer('https://ecn.t{s}.tiles.virtualearth.net/tiles/r{quadkey}.jpeg?g=1', {
+                attribution: '© Microsoft Bing Maps',
+                subdomains: ['0', '1', '2', '3', '4', '5', '6', '7']
+            })
+        };
+
+        let currentLayer = providers['OpenStreetMap'].addTo(map);
+
+        // Зберігання об'єктів
+        const markers = {};
+        const routes = {};
+        const areas = {};
+
+        // 📡 API для комунікації з C#
+        window.addEventListener('load', () => {
+            // Повідомляємо C# що карта готова
+            sendMessageToHost({ type: 'mapReady' });
+        });
+
+        // Отримання повідомлень від C#
+        window.chrome.webview.addEventListener('message', event => {
+            const { action, data } = event.data;
+
+            switch(action) {
+                case 'addNode':
+                    addMarker(data);
+                    break;
+                case 'updateNode':
+                    updateMarker(data);
+                    break;
+                case 'removeNode':
+                    removeMarker(data.id);
+                    break;
+                case 'addRoute':
+                    addRoute(data);
+                    break;
+                case 'removeRoute':
+                    removeRoute(data.id);
+                    break;
+                case 'addArea':
+                    addArea(data);
+                    break;
+                case 'removeArea':
+                    removeArea(data.id);
+                    break;
+                case 'setCenter':
+                    setCenter(data);
+                    break;
+                case 'changeProvider':
+                    changeProvider(data.provider);
+                    break;
+                case 'clearAll':
+                    clearAll();
+                    break;
+                case 'fitBounds':
+                    fitBounds(data);
+                    break;
+            }
+        });
+
+        // 📍 Додавання маркера
+        function addMarker(node) {
+            // Створюємо custom іконку
+            const icon = L.divIcon({
+                className: 'custom-marker',
+                html: `<div class="marker-pin" style="background-color:${node.color || '#2196F3'};">
+                         <div class="marker-icon">${getNodeIcon(node.type)}</div>
+                       </div>
+                       <div class="marker-label">${node.title}</div>`,
+                iconSize: [30, 42],
+                iconAnchor: [15, 42],
+                popupAnchor: [0, -42]
+            });
+
+            const marker = L.marker([node.lat, node.lng], {
+                icon,
+                draggable: true,
+                title: node.title
+            }).addTo(map);
+
+            // Popup з інформацією
+            marker.bindPopup(`
+                <div class="marker-popup">
+                    <h3>${node.title}</h3>
+                    <p>${node.description || ''}</p>
+                    <small>Тип: ${node.type}</small><br>
+                    <small>Lat: ${node.lat.toFixed(6)}, Lng: ${node.lng.toFixed(6)}</small>
+                </div>
+            `);
+
+            // Події
+            marker.on('click', () => {
+                sendMessageToHost({
+                    type: 'nodeClicked',
+                    nodeId: node.id
+                });
+            });
+
+            marker.on('dragend', (e) => {
+                const newPos = e.target.getLatLng();
+                sendMessageToHost({
+                    type: 'nodeMoved',
+                    nodeId: node.id,
+                    lat: newPos.lat,
+                    lng: newPos.lng
+                });
+            });
+
+            markers[node.id] = marker;
+        }
+
+        // ✏️ Оновлення маркера
+        function updateMarker(node) {
+            removeMarker(node.id);
+            addMarker(node);
+        }
+
+        // 🗑️ Видалення маркера
+        function removeMarker(id) {
+            if (markers[id]) {
+                map.removeLayer(markers[id]);
+                delete markers[id];
+            }
+        }
+
+        // 🛤️ Додавання маршруту
+        function addRoute(route) {
+            const fromMarker = markers[route.fromId];
+            const toMarker = markers[route.toId];
+
+            if (!fromMarker || !toMarker) return;
+
+            const styleOptions = {
+                color: route.color || '#2196F3',
+                weight: route.width || 2,
+                opacity: 0.8
+            };
+
+            if (route.style === 'Dashed') {
+                styleOptions.dashArray = '10, 5';
+            } else if (route.style === 'Dotted') {
+                styleOptions.dashArray = '2, 2';
+            }
+
+            const polyline = L.polyline([
+                fromMarker.getLatLng(),
+                toMarker.getLatLng()
+            ], styleOptions).addTo(map);
+
+            // Додаємо стрілку якщо style === 'Arrow'
+            if (route.style === 'Arrow') {
+                polyline.setText('  ►  ', {
+                    repeat: true,
+                    offset: 5,
+                    attributes: { fill: route.color || '#2196F3' }
+                });
+            }
+
+            polyline.bindPopup(`
+                <div class="route-popup">
+                    <b>Маршрут</b><br>
+                    <small>${route.label || 'Без назви'}</small>
+                </div>
+            `);
+
+            routes[route.id] = polyline;
+        }
+
+        // 🗑️ Видалення маршруту
+        function removeRoute(id) {
+            if (routes[id]) {
+                map.removeLayer(routes[id]);
+                delete routes[id];
+            }
+        }
+
+        // 🗺️ Додавання області (полігон)
+        function addArea(area) {
+            try {
+                const coordinates = JSON.parse(area.coordinates);
+
+                const polygon = L.polygon(coordinates, {
+                    color: area.strokeColor || '#1976D2',
+                    fillColor: area.fillColor || '#2196F3',
+                    fillOpacity: area.opacity || 0.3,
+                    weight: 2
+                }).addTo(map);
+
+                polygon.bindPopup(`
+                    <div class="area-popup">
+                        <h4>${area.name}</h4>
+                        <p>${area.description || ''}</p>
+                    </div>
+                `);
+
+                areas[area.id] = polygon;
+            } catch (e) {
+                console.error('Error adding area:', e);
+            }
+        }
+
+        // 🗑️ Видалення області
+        function removeArea(id) {
+            if (areas[id]) {
+                map.removeLayer(areas[id]);
+                delete areas[id];
+            }
+        }
+
+        // 🎯 Встановлення центру карти
+        function setCenter(data) {
+            map.setView([data.lat, data.lng], data.zoom || map.getZoom(), {
+                animate: true,
+                duration: 0.5
+            });
+        }
+
+        // 🔄 Зміна провайдера карт
+        function changeProvider(provider) {
+            map.removeLayer(currentLayer);
+
+            if (providers[provider]) {
+                currentLayer = providers[provider].addTo(map);
+            } else {
+                currentLayer = providers['OpenStreetMap'].addTo(map);
+            }
+        }
+
+        // 🧹 Очистка всіх об'єктів
+        function clearAll() {
+            Object.values(markers).forEach(m => map.removeLayer(m));
+            Object.values(routes).forEach(r => map.removeLayer(r));
+            Object.values(areas).forEach(a => map.removeLayer(a));
+
+            Object.keys(markers).forEach(k => delete markers[k]);
+            Object.keys(routes).forEach(k => delete routes[k]);
+            Object.keys(areas).forEach(k => delete areas[k]);
+        }
+
+        // 📐 Підігнати bounds під всі об'єкти
+        function fitBounds(data) {
+            const bounds = [];
+            Object.values(markers).forEach(m => bounds.push(m.getLatLng()));
+
+            if (bounds.length > 0) {
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        }
+
+        // 📤 Відправка повідомлення до C#
+        function sendMessageToHost(message) {
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage(message);
+            }
+        }
+
+        // 🖱️ Події карти
+        map.on('click', (e) => {
+            sendMessageToHost({
+                type: 'mapClicked',
+                lat: e.latlng.lat,
+                lng: e.latlng.lng
+            });
+        });
+
+        map.on('moveend', () => {
+            const center = map.getCenter();
+            sendMessageToHost({
+                type: 'mapMoved',
+                lat: center.lat,
+                lng: center.lng,
+                zoom: map.getZoom()
+            });
+        });
+
+        map.on('zoomend', () => {
+            sendMessageToHost({
+                type: 'zoomChanged',
+                zoom: map.getZoom()
+            });
+        });
+
+        // 🎨 Іконки для типів вузлів
+        function getNodeIcon(type) {
+            const icons = {
+                'Milestone': '🎯',
+                'Location': '📍',
+                'Office': '🏢',
+                'Site': '🏗️',
+                'Meeting': '👥',
+                'Checkpoint': '✓',
+                'Custom': '⭐'
+            };
+            return icons[type] || '📍';
+        }
+
+        // 🐛 Debug mode
+        window.debugMap = () => {
+            console.log('Markers:', Object.keys(markers).length);
+            console.log('Routes:', Object.keys(routes).length);
+            console.log('Areas:', Object.keys(areas).length);
+            console.log('Current provider:', currentLayer);
+        };
+    </script>
+</body>
+</html>
