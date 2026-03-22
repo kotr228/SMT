@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from docx import Document
-from docx.shared import Pt, Cm
+from docx.shared import Pt, Cm, RGBColor
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -55,6 +55,104 @@ def add_empty(doc):
     run = p.add_run("")
     set_font(run)
     return p
+
+def set_cell_bg(cell, hex_color):
+    tcPr = cell._tc.get_or_add_tcPr()
+    shd = OxmlElement('w:shd')
+    shd.set(qn('w:val'), 'clear')
+    shd.set(qn('w:color'), 'auto')
+    shd.set(qn('w:fill'), hex_color)
+    existing = tcPr.find(qn('w:shd'))
+    if existing is not None:
+        tcPr.remove(existing)
+    tcPr.append(shd)
+
+def set_cell_text(cell, text, bold=False, align=WD_ALIGN_PARAGRAPH.CENTER, size=12):
+    p = cell.paragraphs[0]
+    p.clear()
+    p.alignment = align
+    p.paragraph_format.space_before = Pt(3)
+    p.paragraph_format.space_after = Pt(3)
+    run = p.add_run(text)
+    set_font(run, bold=bold, size=size)
+
+def merge_row(table, row_idx, col_start, col_end):
+    """Merge cells in a row from col_start to col_end (inclusive)"""
+    a = table.cell(row_idx, col_start)
+    b = table.cell(row_idx, col_end)
+    a.merge(b)
+    return a
+
+def add_diagram(doc):
+    """Add visual architecture diagram using table"""
+    add_paragraph(doc, "Схема архітектури проекту:", bold=True)
+    add_empty(doc)
+
+    # 3-column, 7-row table
+    tbl = doc.add_table(rows=7, cols=3)
+    tbl.style = "Table Grid"
+
+    # --- Row 0: DocControlUI (merged all 3) ---
+    cell_ui = merge_row(tbl, 0, 0, 2)
+    set_cell_bg(cell_ui, "BDD7EE")
+    set_cell_text(cell_ui, "DocControlUI\n(WPF + MahApps.Metro — графічний інтерфейс користувача)", bold=True)
+
+    # --- Row 1: Named Pipes arrow (merged) ---
+    cell_ipc = merge_row(tbl, 1, 0, 2)
+    set_cell_bg(cell_ipc, "FFFFFF")
+    set_cell_text(cell_ipc, "↕   Named Pipes (IPC — міжпроцесна комунікація)   ↕")
+
+    # --- Row 2: DocControlService + SQLite (2+1) ---
+    cell_svc = tbl.cell(2, 0)
+    cell_svc.merge(tbl.cell(2, 1))
+    set_cell_bg(cell_svc, "FCE4D6")
+    set_cell_text(cell_svc, "DocControlService\n(Windows Service — бекенд: моніторинг файлів,\nверсіонування Git, IP-фільтрація)", bold=True)
+
+    cell_db = tbl.cell(2, 2)
+    set_cell_bg(cell_db, "FFF2CC")
+    set_cell_text(cell_db, "SQLite\nDatabase\n(Microsoft.\nData.Sqlite)")
+
+    # --- Row 3: arrows ---
+    cell_a1 = tbl.cell(3, 0)
+    set_cell_bg(cell_a1, "FFFFFF")
+    set_cell_text(cell_a1, "↓  UDP/TCP")
+
+    cell_a2 = tbl.cell(3, 1)
+    set_cell_bg(cell_a2, "FFFFFF")
+    set_cell_text(cell_a2, "↓  HTTP API")
+
+    cell_a3 = tbl.cell(3, 2)
+    set_cell_bg(cell_a3, "FFFFFF")
+    set_cell_text(cell_a3, "↓  Maps API")
+
+    # --- Row 4: three sub-modules ---
+    cell_net = tbl.cell(4, 0)
+    set_cell_bg(cell_net, "E2EFDA")
+    set_cell_text(cell_net,
+        "DocControlNetworkCore\n\nUDP Broadcast\n(виявлення вузлів)\n\nTCP Transfer\n(передача файлів)\n\nSecurityService", bold=True)
+
+    cell_ai = tbl.cell(4, 1)
+    set_cell_bg(cell_ai, "EAD1DC")
+    set_cell_text(cell_ai,
+        "DocControlAI\n\nOllama Client\n(локальна LLM)\n\nChronological\nRoadmapGenerator\n\nGeoRoadmap\nGenerator", bold=True)
+
+    cell_maps = tbl.cell(4, 2)
+    set_cell_bg(cell_maps, "E2EFDA")
+    set_cell_text(cell_maps,
+        "DocControl\n.Maps.Core\n\nGoogle Maps\nBing Maps\nOpenStreetMap\n\nOfflineCacheService\nGeoCoderService", bold=True)
+
+    # --- Row 5: arrow up to shared ---
+    cell_b = merge_row(tbl, 5, 0, 2)
+    set_cell_bg(cell_b, "FFFFFF")
+    set_cell_text(cell_b, "↑  використовують спільні інтерфейси та моделі  ↑")
+
+    # --- Row 6: DocControlService.Shared (merged all 3) ---
+    cell_shared = merge_row(tbl, 6, 0, 2)
+    set_cell_bg(cell_shared, "F2F2F2")
+    set_cell_text(cell_shared,
+        "DocControlService.Shared\n(IFileSystemService, RemoteNode, PeerIdentity, FileSystemItem — спільні інтерфейси та DTO)", bold=True)
+
+    add_empty(doc)
 
 doc = Document()
 
@@ -147,6 +245,10 @@ for proj, desc in arch_rows:
                 set_font(run)
 
 add_empty(doc)
+add_empty(doc)
+
+# Architecture diagram
+add_diagram(doc)
 add_empty(doc)
 
 # Structural choice
