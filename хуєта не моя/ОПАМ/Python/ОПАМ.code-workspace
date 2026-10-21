@@ -1,0 +1,11 @@
+{
+    "folders": [
+        { "path": "ЛР1" },
+        { "path": "ЛР2" },
+        { "path": "ЛР3" },
+        { "path": "ЛР4" }
+    ],
+    "extensions": {
+        "recommendations": ["ms-python.python", "ms-python.debugpy"]
+    }
+}
